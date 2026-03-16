@@ -89,6 +89,72 @@ vim.keymap.set("n", "<leader>b", dap.toggle_breakpoint)
 
 
 -- Overseer
-require("overseer").setup()
-vim.keymap.set("n", "<leader>r", ":OverseerRun<CR>")
+require("overseer").setup({
+  templates = { "builtin" },
+})
+
+vim.keymap.set("n", "<leader>r", function()
+  local file = vim.fn.expand("%:p")       -- full path to current file
+  local out = vim.fn.expand("%:p:r")      -- same path without extension
+  local task = require("overseer").new_task({
+    cmd = { "g++", "-std=c++23", file, "-o", out },
+    name = "build current file",
+    components = { "default" },
+  })
+  task:start()
+  require("overseer").open({ enter = false })
+end)
+
 vim.keymap.set("n", "<leader>t", ":OverseerToggle<CR>")
+
+
+-- Cmp
+
+local cmp = require("cmp")
+local luasnip = require("luasnip")
+
+cmp.setup({
+  snippet = {
+    expand = function(args)
+      luasnip.lsp_expand(args.body)
+    end,
+  },
+  mapping = cmp.mapping.preset.insert({
+    ["<Tab>"]     = cmp.mapping.select_next_item(),
+    ["<S-Tab>"]   = cmp.mapping.select_prev_item(),
+    ["<CR>"]      = cmp.mapping.confirm({ select = true }),
+    ["<C-Space>"] = cmp.mapping.complete(),
+  }),
+  sources = {
+    { name = "nvim_lsp" },
+    { name = "luasnip" },
+    { name = "buffer" },
+  },
+})
+
+-- diagnostics display
+vim.diagnostic.config({
+  virtual_text = true,       -- shows error inline at end of line
+  signs = true,              -- shows icons in the sign column
+  underline = true,          -- underlines the problematic code
+  update_in_insert = false,  -- only update when leaving insert mode
+})
+
+-- Conform
+require("conform").setup({
+  formatters_by_ft = {
+    cpp = { "clang-format" },
+    c   = { "clang-format" },
+  },
+  format_on_save = {
+    timeout_ms = 500,
+    lsp_fallback = true,
+  },
+})
+
+-- Autopairs
+
+require("nvim-autopairs").setup()
+local cmp_autopairs = require("nvim-autopairs.completion.cmp")
+local cmp = require("cmp")
+cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
