@@ -29,3 +29,19 @@ require('nvim-treesitter').install { 'lua', 'bash', 'cpp', 'python', 'html', 'cs
 
 -- Neo-tree
 vim.keymap.set('n', '<leader>e', ':Neotree toggle<CR>', { desc = 'Toggle Neotree' })
+
+
+-- Mason
+require("mason").setup()
+require("mason-lspconfig").setup({
+    ensure_installed = { "clangd" },
+    automatic_installation = true,
+})
+
+vim.lsp.config('clangd', {
+  cmd = { 'clangd' },
+  filetypes = { 'c', 'cpp', 'objc', 'objcpp' },
+  root_markers = { 'compile_commands.json', 'CMakeLists.txt', '.git' },
+})
+
+vim.lsp.enable('clangd')
